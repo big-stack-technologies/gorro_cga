@@ -263,22 +263,22 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Customers</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{loading ? "..." : summary?.totalCustomers || 0}</p>
-              <p className="text-sm text-blue-600 mt-2">Referral Code: {summary?.referralCode || "..."}</p>
+              <p className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">{loading ? "..." : summary?.totalCustomers || 0}</p>
+              <p className="text-sm text-blue-600 mt-2 break-words">Referral Code: {summary?.referralCode || "..."}</p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Book Value</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{loading ? "..." : `₦${summary?.customersUnderManagementValue?.toLocaleString() || 0}`}</p>
+              <p className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white break-words">{loading ? "..." : `₦${(summary?.customersUnderManagementValue || 0).toLocaleString()}`}</p>
               <p className="text-sm text-green-600 mt-2">Under Management</p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Referral Bonus</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{loading ? "..." : `₦${summary?.referralBonusEarned?.toLocaleString() || 0}`}</p>
+              <p className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white break-words">{loading ? "..." : `₦${(summary?.referralBonusEarned || 0).toLocaleString()}`}</p>
               <p className="text-sm text-green-600 mt-2">Total Earned</p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Active Customers</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{loading ? "..." : customers?.data.filter(c => c.status === "ACTIVE").length || 0}</p>
+              <p className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">{loading ? "..." : customers?.data.filter(c => c.status === "ACTIVE").length || 0}</p>
               <p className="text-sm text-green-600 mt-2">Currently Active</p>
             </div>
           </div>
