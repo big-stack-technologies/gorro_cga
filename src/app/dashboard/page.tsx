@@ -13,7 +13,9 @@ import {
   User,
   LogOut,
   Menu,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react"
 
 interface SummaryData {
@@ -99,6 +101,9 @@ export default function DashboardPage() {
   const [loadingDetail, setLoadingDetail] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
+  const [allCustomers, setAllCustomers] = useState<CustomersResponse | null>(null)
 
   const fetchData = async () => {
     const token = localStorage.getItem("token")
@@ -108,11 +113,14 @@ export default function DashboardPage() {
     }
 
     try {
-      const [summaryRes, customersRes] = await Promise.all([
+      const [summaryRes, customersRes, allCustomersRes] = await Promise.all([
         fetch("https://gorro.online/cga/summary", {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        fetch("https://gorro.online/cga/customers?limit=20", {
+        fetch(`https://gorro.online/cga/customers?page=${currentPage}&limit=${itemsPerPage}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch("https://gorro.online/cga/customers?limit=1000", {
           headers: { Authorization: `Bearer ${token}` }
         })
       ])
@@ -126,6 +134,11 @@ export default function DashboardPage() {
         const customersData = await customersRes.json()
         setCustomers(customersData)
       }
+
+      if (allCustomersRes.ok) {
+        const allCustomersData = await allCustomersRes.json()
+        setAllCustomers(allCustomersData)
+      }
     } catch (error) {
       console.error("Error fetching data:", error)
     } finally {
@@ -136,7 +149,7 @@ export default function DashboardPage() {
   useEffect(() => {
     setTimeout(() => fetchData(), 0)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [currentPage])
 
   const handleLogout = () => {
     localStorage.removeItem("token")
@@ -144,9 +157,9 @@ export default function DashboardPage() {
     router.push("/login")
   }
 
-  const filteredCustomers = customers?.data.filter(customer => {
+  const filteredCustomers = (searchQuery || statusFilter !== "All" ? allCustomers : customers)?.data.filter(customer => {
     const matchesSearch = customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         customer.email.toLowerCase().includes(searchQuery.toLowerCase())
+                         (customer.email?.toLowerCase() || "").includes(searchQuery.toLowerCase())
     const matchesStatus = statusFilter === "All" || customer.status === statusFilter
     return matchesSearch && matchesStatus
   }) || []
@@ -178,6 +191,13 @@ export default function DashboardPage() {
   const handleViewDetails = (customerId: string) => {
     setDropdownOpen(null)
     fetchCustomerDetail(customerId)
+  }
+
+  const totalPages = customers ? Math.ceil(customers.total / itemsPerPage) : 0
+
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return
+    setCurrentPage(page)
   }
 
   return (
@@ -278,7 +298,7 @@ export default function DashboardPage() {
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Active Customers</p>
-              <p className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">{loading ? "..." : customers?.data.filter(c => c.status === "ACTIVE").length || 0}</p>
+              <p className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">{loading ? "..." : allCustomers?.data.filter(c => c.status === "ACTIVE").length || 0}</p>
               <p className="text-sm text-green-600 mt-2">Currently Active</p>
             </div>
           </div>
@@ -308,6 +328,7 @@ export default function DashboardPage() {
                     <option value="All">All Status</option>
                     <option value="ACTIVE">Active</option>
                     <option value="INACTIVE">Inactive</option>
+                    <option value="CLOSED">Closed</option>
                   </select>
                 </div>
               </div>
@@ -359,6 +380,8 @@ export default function DashboardPage() {
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                             customer.status === "ACTIVE" 
                               ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" 
+                              : customer.status === "CLOSED"
+                              ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
                               : "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400"
                           }`}>
                             {customer.status}
@@ -393,10 +416,46 @@ export default function DashboardPage() {
                 </tbody>
               </table>
             </div>
-            <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Showing {filteredCustomers.length} of {customers?.total || 0} customers
+                {searchQuery || statusFilter !== "All" 
+                  ? `Showing ${filteredCustomers.length} of ${allCustomers?.total || 0} customers`
+                  : `Showing ${customers?.data.length || 0} of ${customers?.total || 0} customers`
+                }
               </p>
+              {!searchQuery && statusFilter === "All" && totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`px-3 py-2 rounded-lg text-sm ${
+                          currentPage === page
+                            ? "bg-blue-600 text-white"
+                            : "border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -450,6 +509,8 @@ export default function DashboardPage() {
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                         selectedCustomer.profile.status === "ACTIVE" 
                           ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" 
+                          : selectedCustomer.profile.status === "CLOSED"
+                          ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
                           : "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400"
                       }`}>
                         {selectedCustomer.profile.status}
@@ -501,7 +562,7 @@ export default function DashboardPage() {
                 )}
 
                 {/* Savings */}
-                {selectedCustomer.savings.length > 0 && (
+                {selectedCustomer.savings && selectedCustomer.savings.length > 0 && (
                   <div className="mb-8">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Savings</h3>
                     <div className="space-y-2">
