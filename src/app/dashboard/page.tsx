@@ -17,12 +17,26 @@ import {
   ChevronLeft,
   ChevronRight
 } from "lucide-react"
+import { XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from "recharts"
 
 interface SummaryData {
   referralCode: string
   totalCustomers: number
   customersUnderManagementValue: number
   referralBonusEarned: number
+}
+
+interface TrendsData {
+  interval: string
+  from: string
+  to: string
+  baselineCustomers: number
+  series: Array<{
+    period: string
+    newCustomers: number
+    cumulativeCustomers: number
+    bonusEarned: number
+  }>
 }
 
 interface Customer {
@@ -52,10 +66,10 @@ interface CustomerDetail {
   }
   walletBalance: number
   accounts: Array<{
-    name: string
-    accountType: string
-    balance: number
-    currency: string
+    bankName: string
+    accountNumber: string
+    accountName: string
+    provider: string
   }>
   savings: Array<{
     id: string
@@ -67,20 +81,33 @@ interface CustomerDetail {
     projectedInterest: number
     maturityDate: string
   }>
+  smartWallet: {
+    enabled: boolean
+    accruedInterest: number
+    withdrawalCount: number
+    interestForfeited: boolean
+    activatedAt: string
+    deactivatedAt: string | null
+  } | null
   clusters: Array<{
     clusterId: string
     name: string
     role: string
     status: string
   }>
-  recentActivity: Array<{
-    type: string
-    direction: string
-    status: string
-    amount: number
-    description: string
-    date: string
-  }>
+  recentActivity: {
+    page: number
+    limit: number
+    total: number
+    data: Array<{
+      type: string
+      direction: string
+      status: string
+      amount: number
+      description: string
+      date: string
+    }>
+  }
 }
 
 interface CustomersResponse {
@@ -104,6 +131,9 @@ export default function DashboardPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
   const [allCustomers, setAllCustomers] = useState<CustomersResponse | null>(null)
+  const [trends, setTrends] = useState<TrendsData | null>(null)
+  const [dateFrom, setDateFrom] = useState("")
+  const [dateTo, setDateTo] = useState("")
 
   const fetchData = async () => {
     const token = localStorage.getItem("token")
@@ -113,7 +143,7 @@ export default function DashboardPage() {
     }
 
     try {
-      const [summaryRes, customersRes, allCustomersRes] = await Promise.all([
+      const [summaryRes, customersRes, allCustomersRes, trendsRes] = await Promise.all([
         fetch("https://gorro.online/cga/summary", {
           headers: { Authorization: `Bearer ${token}` }
         }),
@@ -121,6 +151,9 @@ export default function DashboardPage() {
           headers: { Authorization: `Bearer ${token}` }
         }),
         fetch("https://gorro.online/cga/customers?limit=1000", {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch("https://gorro.online/cga/trends?interval=month", {
           headers: { Authorization: `Bearer ${token}` }
         })
       ])
@@ -138,6 +171,11 @@ export default function DashboardPage() {
       if (allCustomersRes.ok) {
         const allCustomersData = await allCustomersRes.json()
         setAllCustomers(allCustomersData)
+      }
+
+      if (trendsRes.ok) {
+        const trendsData = await trendsRes.json()
+        setTrends(trendsData)
       }
     } catch (error) {
       console.error("Error fetching data:", error)
@@ -157,11 +195,15 @@ export default function DashboardPage() {
     router.push("/login")
   }
 
-  const filteredCustomers = (searchQuery || statusFilter !== "All" ? allCustomers : customers)?.data.filter(customer => {
+  const filteredCustomers = (searchQuery || statusFilter !== "All" || dateFrom || dateTo ? allCustomers : customers)?.data.filter(customer => {
     const matchesSearch = customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (customer.email?.toLowerCase() || "").includes(searchQuery.toLowerCase())
     const matchesStatus = statusFilter === "All" || customer.status === statusFilter
-    return matchesSearch && matchesStatus
+    const matchesDateRange = (!dateFrom && !dateTo) || 
+      (dateFrom && dateTo && new Date(customer.joinedAt) >= new Date(dateFrom) && new Date(customer.joinedAt) <= new Date(dateTo)) ||
+      (dateFrom && !dateTo && new Date(customer.joinedAt) >= new Date(dateFrom)) ||
+      (!dateFrom && dateTo && new Date(customer.joinedAt) <= new Date(dateTo))
+    return matchesSearch && matchesStatus && matchesDateRange
   }) || []
 
   const fetchCustomerDetail = async (customerId: string) => {
@@ -265,7 +307,7 @@ export default function DashboardPage() {
       {/* Main Content */}
       <main className="flex-1 overflow-auto lg:ml-0 flex flex-col">
         {/* Fixed Header */}
-        <div className="sticky top-0 bg-gray-50 dark:bg-gray-900 z-30 p-8 border-b border-gray-200 dark:border-gray-700">
+        <div className="sticky top-0 bg-gray-50 dark:bg-gray-900 z-30 p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
@@ -277,7 +319,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Scrollable Content */}
-        <div className="p-8">
+        <div className="p-4">
 
           {/* Metrics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -300,6 +342,71 @@ export default function DashboardPage() {
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Active Customers</p>
               <p className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">{loading ? "..." : allCustomers?.data.filter(c => c.status === "ACTIVE").length || 0}</p>
               <p className="text-sm text-green-600 mt-2">Currently Active</p>
+            </div>
+          </div>
+
+          {/* Trends Chart */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Customer Growth & Bonus Trends</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Monthly overview of new customers and referral bonus earned</p>
+            </div>
+            <div className="p-6">
+              {trends && trends.series.length > 0 ? (
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={trends.series.map(item => ({
+                      ...item,
+                      period: new Date(item.period).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+                    }))}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
+                      <XAxis 
+                        dataKey="period" 
+                        className="text-gray-500 dark:text-gray-400"
+                        tick={{ fill: '#6b7280' }}
+                      />
+                      <YAxis 
+                        yAxisId="left"
+                        className="text-gray-500 dark:text-gray-400"
+                        tick={{ fill: '#6b7280' }}
+                      />
+                      <YAxis 
+                        yAxisId="right"
+                        orientation="right"
+                        className="text-gray-500 dark:text-gray-400"
+                        tick={{ fill: '#6b7280' }}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'rgb(255 255 255)',
+                          border: '1px solid rgb(229 231 235)',
+                          borderRadius: '0.5rem'
+                        }}
+                        itemStyle={{ color: 'rgb(17 24 39)' }}
+                      />
+                      <Legend />
+                      <Bar 
+                        yAxisId="left"
+                        dataKey="newCustomers" 
+                        fill="#3b82f6" 
+                        name="New Customers"
+                        radius={[4, 4, 0, 0]}
+                      />
+                      <Bar 
+                        yAxisId="right"
+                        dataKey="bonusEarned" 
+                        fill="#10b981" 
+                        name="Bonus Earned (₦)"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-80 flex items-center justify-center">
+                  <p className="text-gray-500 dark:text-gray-400">No trend data available</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -330,6 +437,24 @@ export default function DashboardPage() {
                     <option value="INACTIVE">Inactive</option>
                     <option value="CLOSED">Closed</option>
                   </select>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <label className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">From:</label>
+                    <input
+                      type="date"
+                      value={dateFrom}
+                      onChange={(e) => setDateFrom(e.target.value)}
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white w-full sm:w-auto"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <label className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">To:</label>
+                    <input
+                      type="date"
+                      value={dateTo}
+                      onChange={(e) => setDateTo(e.target.value)}
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white w-full sm:w-auto"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -388,7 +513,7 @@ export default function DashboardPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white font-medium">
-                          ₦{customer.walletBalance.toLocaleString()}
+                          ₦{(customer.walletBalance || 0).toLocaleString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap relative">
                           <div className="relative">
@@ -418,12 +543,12 @@ export default function DashboardPage() {
             </div>
             <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                {searchQuery || statusFilter !== "All" 
+                {searchQuery || statusFilter !== "All" || dateFrom || dateTo
                   ? `Showing ${filteredCustomers.length} of ${allCustomers?.total || 0} customers`
                   : `Showing ${customers?.data.length || 0} of ${customers?.total || 0} customers`
                 }
               </p>
-              {!searchQuery && statusFilter === "All" && totalPages > 1 && (
+              {!searchQuery && statusFilter === "All" && !dateFrom && !dateTo && totalPages > 1 && (
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 w-full sm:w-auto">
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
@@ -539,22 +664,33 @@ export default function DashboardPage() {
                 <div className="mb-8">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Wallet Balance</h3>
                   <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">₦{selectedCustomer.walletBalance.toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">₦{(selectedCustomer.walletBalance || 0).toLocaleString()}</p>
                   </div>
                 </div>
 
                 {/* Accounts */}
-                {selectedCustomer.accounts.length > 0 && (
+                {selectedCustomer.accounts && selectedCustomer.accounts.length > 0 && (
                   <div className="mb-8">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Accounts</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Bank Accounts</h3>
                     <div className="space-y-2">
                       {selectedCustomer.accounts.map((account, index) => (
-                        <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex justify-between items-center">
-                          <div>
-                            <p className="font-medium text-gray-900 dark:text-white">{account.name}</p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">{account.accountType}</p>
+                        <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <p className="font-medium text-gray-900 dark:text-white">{account.bankName}</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">{account.provider}</p>
+                            </div>
                           </div>
-                          <p className="font-bold text-gray-900 dark:text-white">{account.currency} {account.balance.toLocaleString()}</p>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                              <p className="text-gray-500 dark:text-gray-400">Account Number</p>
+                              <p className="font-medium text-gray-900 dark:text-white">{account.accountNumber}</p>
+                            </div>
+                            <div>
+                              <p className="text-gray-500 dark:text-gray-400">Account Name</p>
+                              <p className="font-medium text-gray-900 dark:text-white">{account.accountName}</p>
+                            </div>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -584,15 +720,15 @@ export default function DashboardPage() {
                           <div className="grid grid-cols-2 gap-2 text-sm">
                             <div>
                               <p className="text-gray-500 dark:text-gray-400">Principal</p>
-                              <p className="font-medium text-gray-900 dark:text-white">₦{saving.principal.toLocaleString()}</p>
+                              <p className="font-medium text-gray-900 dark:text-white">₦{(saving.principal || 0).toLocaleString()}</p>
                             </div>
                             <div>
                               <p className="text-gray-500 dark:text-gray-400">Accrued Interest</p>
-                              <p className="font-medium text-gray-900 dark:text-white">₦{saving.accruedInterest.toLocaleString()}</p>
+                              <p className="font-medium text-gray-900 dark:text-white">₦{(saving.accruedInterest || 0).toLocaleString()}</p>
                             </div>
                             <div>
                               <p className="text-gray-500 dark:text-gray-400">Projected Interest</p>
-                              <p className="font-medium text-gray-900 dark:text-white">₦{saving.projectedInterest.toLocaleString()}</p>
+                              <p className="font-medium text-gray-900 dark:text-white">₦{(saving.projectedInterest || 0).toLocaleString()}</p>
                             </div>
                             <div>
                               <p className="text-gray-500 dark:text-gray-400">Maturity Date</p>
@@ -630,11 +766,11 @@ export default function DashboardPage() {
                 )}
 
                 {/* Recent Activity */}
-                {selectedCustomer.recentActivity.length > 0 && (
-                  <div>
+                {selectedCustomer.recentActivity && selectedCustomer.recentActivity.data.length > 0 && (
+                  <div className="mb-8">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Activity</h3>
                     <div className="space-y-2">
-                      {selectedCustomer.recentActivity.map((activity, index) => (
+                      {selectedCustomer.recentActivity.data.map((activity, index) => (
                         <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex justify-between items-center">
                           <div>
                             <p className="font-medium text-gray-900 dark:text-white">{activity.description}</p>
@@ -644,7 +780,7 @@ export default function DashboardPage() {
                             <p className={`font-bold ${
                               activity.direction === "INBOUND" ? "text-green-600" : "text-red-600"
                             }`}>
-                              {activity.direction === "INBOUND" ? "+" : "-"}₦{activity.amount.toLocaleString()}
+                              {activity.direction === "INBOUND" ? "+" : "-"}₦{(activity.amount || 0).toLocaleString()}
                             </p>
                             <p className="text-sm text-gray-500 dark:text-gray-400">{new Date(activity.date).toLocaleDateString()}</p>
                           </div>
