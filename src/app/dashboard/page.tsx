@@ -253,15 +253,15 @@ export default function DashboardPage() {
       </button>
 
       {/* Sidebar */}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-40 w-64 h-screen bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transform transition-transform duration-300 ease-in-out ${
+      <aside className={`fixed lg:static inset-y-0 left-0 z-40 w-64 h-screen bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transform transition-transform duration-300 ease-in-out overflow-hidden ${
         sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       }`}>
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <h1 className="text-2xl font-bold text-blue-600">CGA</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Community Growth Associate</p>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           <a href="#" className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium">
             <LayoutDashboard className="w-5 h-5" />
             Dashboard
@@ -284,7 +284,7 @@ export default function DashboardPage() {
           </a>
         </nav>
 
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
           <div className="flex items-center gap-3 px-4 py-3">
             <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
               <User className="w-5 h-5 text-white" />
@@ -347,13 +347,13 @@ export default function DashboardPage() {
 
           {/* Trends Chart */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Customer Growth & Bonus Trends</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Monthly overview of new customers and referral bonus earned</p>
+            <div className=" border-b border-gray-200 p-1 dark:border-gray-700">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Customer Growth & Bonus Trends</h2>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">Monthly overview of new customers and referral bonus earned</p>
             </div>
-            <div className="p-6">
+            <div className="p-1 sm:p-2">
               {trends && trends.series.length > 0 ? (
-                <div className="h-80">
+                <div className="h-60 sm:h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={trends.series.map(item => ({
                       ...item,
@@ -363,28 +363,34 @@ export default function DashboardPage() {
                       <XAxis 
                         dataKey="period" 
                         className="text-gray-500 dark:text-gray-400"
-                        tick={{ fill: '#6b7280' }}
+                        tick={{ fill: '#6b7280', fontSize: 10 }}
+                        tickLine={{ stroke: '#e5e7eb' }}
                       />
                       <YAxis 
                         yAxisId="left"
                         className="text-gray-500 dark:text-gray-400"
-                        tick={{ fill: '#6b7280' }}
+                        tick={{ fill: '#6b7280', fontSize: 10 }}
+                        tickLine={{ stroke: '#e5e7eb' }}
                       />
                       <YAxis 
                         yAxisId="right"
                         orientation="right"
                         className="text-gray-500 dark:text-gray-400"
-                        tick={{ fill: '#6b7280' }}
+                        tick={{ fill: '#6b7280', fontSize: 10 }}
+                        tickLine={{ stroke: '#e5e7eb' }}
                       />
                       <Tooltip 
                         contentStyle={{ 
                           backgroundColor: 'rgb(255 255 255)',
                           border: '1px solid rgb(229 231 235)',
-                          borderRadius: '0.5rem'
+                          borderRadius: '0.5rem',
+                          fontSize: '12px'
                         }}
                         itemStyle={{ color: 'rgb(17 24 39)' }}
                       />
-                      <Legend />
+                      <Legend 
+                        wrapperStyle={{ fontSize: '12px' }}
+                      />
                       <Bar 
                         yAxisId="left"
                         dataKey="newCustomers" 
@@ -403,7 +409,7 @@ export default function DashboardPage() {
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="h-80 flex items-center justify-center">
+                <div className="h-60 sm:h-80 flex items-center justify-center">
                   <p className="text-gray-500 dark:text-gray-400">No trend data available</p>
                 </div>
               )}
