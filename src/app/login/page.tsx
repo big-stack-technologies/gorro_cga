@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Lock, User } from "lucide-react"
+import toast from "toastify-js"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -47,6 +48,18 @@ export default function LoginPage() {
       // Store tokens in localStorage
       localStorage.setItem("token", data.accessToken);
       localStorage.setItem("refreshToken", data.refreshToken);
+      
+      // Show success toast
+      toast({
+        text: "Login successful! Redirecting to dashboard...",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        style: {
+          background: "linear-gradient(to right, #10b981, #059669)",
+          color: "white",
+        },
+      });
       
       // Redirect to dashboard
       router.push("/dashboard");
