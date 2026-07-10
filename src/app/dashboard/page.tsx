@@ -134,6 +134,8 @@ export default function DashboardPage() {
   const [trends, setTrends] = useState<TrendsData | null>(null)
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
+  const [activityPage, setActivityPage] = useState(1)
+  const [activityItemsPerPage] = useState(5)
 
   const fetchData = async () => {
     const token = localStorage.getItem("token")
@@ -214,8 +216,9 @@ export default function DashboardPage() {
     }
 
     setLoadingDetail(true)
+    setActivityPage(1)
     try {
-      const response = await fetch(`https://gorro.online/cga/customers/${customerId}`, {
+      const response = await fetch(`https://gorro.online/cga/customers/${customerId}?activityLimit=${activityItemsPerPage}&activityPage=1`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
@@ -227,6 +230,27 @@ export default function DashboardPage() {
       console.error("Error fetching customer detail:", error)
     } finally {
       setLoadingDetail(false)
+    }
+  }
+
+  const fetchCustomerActivityPage = async (customerId: string, page: number) => {
+    const token = localStorage.getItem("token")
+    if (!token) {
+      router.push("/login")
+      return
+    }
+
+    try {
+      const response = await fetch(`https://gorro.online/cga/customers/${customerId}?activityLimit=${activityItemsPerPage}&activityPage=${page}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setSelectedCustomer(prev => prev ? { ...prev, recentActivity: data.recentActivity } : null)
+      }
+    } catch (error) {
+      console.error("Error fetching customer activity:", error)
     }
   }
 
@@ -703,46 +727,37 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                {/* Savings */}
-                {selectedCustomer.savings && selectedCustomer.savings.length > 0 && (
+                {/* Smart Wallet */}
+                {selectedCustomer.smartWallet && selectedCustomer.smartWallet.enabled && (
                   <div className="mb-8">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Savings</h3>
-                    <div className="space-y-2">
-                      {selectedCustomer.savings.map((saving) => (
-                        <div key={saving.id} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <p className="font-medium text-gray-900 dark:text-white">{saving.name}</p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">{saving.type} - {saving.status}</p>
-                            </div>
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              saving.status === "ACTIVE" 
-                                ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" 
-                                : "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400"
-                            }`}>
-                              {saving.status}
-                            </span>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div>
-                              <p className="text-gray-500 dark:text-gray-400">Principal</p>
-                              <p className="font-medium text-gray-900 dark:text-white">₦{(saving.principal || 0).toLocaleString()}</p>
-                            </div>
-                            <div>
-                              <p className="text-gray-500 dark:text-gray-400">Accrued Interest</p>
-                              <p className="font-medium text-gray-900 dark:text-white">₦{(saving.accruedInterest || 0).toLocaleString()}</p>
-                            </div>
-                            <div>
-                              <p className="text-gray-500 dark:text-gray-400">Projected Interest</p>
-                              <p className="font-medium text-gray-900 dark:text-white">₦{(saving.projectedInterest || 0).toLocaleString()}</p>
-                            </div>
-                            <div>
-                              <p className="text-gray-500 dark:text-gray-400">Maturity Date</p>
-                              <p className="font-medium text-gray-900 dark:text-white">{new Date(saving.maturityDate).toLocaleDateString()}</p>
-                            </div>
-                          </div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Smart Wallet</h3>
+                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-gray-500 dark:text-gray-400">Status</p>
+                          <p className="font-medium text-gray-900 dark:text-white">Enabled</p>
                         </div>
-                      ))}
+                        <div>
+                          <p className="text-gray-500 dark:text-gray-400">Accrued Interest</p>
+                          <p className="font-medium text-gray-900 dark:text-white">₦{(selectedCustomer.smartWallet.accruedInterest || 0).toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500 dark:text-gray-400">Withdrawal Count</p>
+                          <p className="font-medium text-gray-900 dark:text-white">{selectedCustomer.smartWallet.withdrawalCount}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500 dark:text-gray-400">Interest Forfeited</p>
+                          <p className="font-medium text-gray-900 dark:text-white">{selectedCustomer.smartWallet.interestForfeited ? "Yes" : "No"}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500 dark:text-gray-400">Activated At</p>
+                          <p className="font-medium text-gray-900 dark:text-white">{new Date(selectedCustomer.smartWallet.activatedAt).toLocaleDateString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500 dark:text-gray-400">Deactivated At</p>
+                          <p className="font-medium text-gray-900 dark:text-white">{selectedCustomer.smartWallet.deactivatedAt ? new Date(selectedCustomer.smartWallet.deactivatedAt).toLocaleDateString() : "N/A"}</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -776,7 +791,7 @@ export default function DashboardPage() {
                   <div className="mb-8">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Activity</h3>
                     <div className="space-y-2">
-                      {selectedCustomer.recentActivity.data.map((activity, index) => (
+                      {selectedCustomer.recentActivity.data.slice(0, activityItemsPerPage).map((activity, index) => (
                         <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex justify-between items-center">
                           <div>
                             <p className="font-medium text-gray-900 dark:text-white">{activity.description}</p>
@@ -793,6 +808,36 @@ export default function DashboardPage() {
                         </div>
                       ))}
                     </div>
+                    {selectedCustomer.recentActivity.total > activityItemsPerPage && (
+                      <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Showing {Math.min(activityItemsPerPage, selectedCustomer.recentActivity.data.length)} of {selectedCustomer.recentActivity.total} activities
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              setActivityPage(Math.max(1, activityPage - 1))
+                              fetchCustomerActivityPage(selectedCustomer.profile.id, Math.max(1, activityPage - 1))
+                            }}
+                            disabled={activityPage === 1}
+                            className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">Page {activityPage}</span>
+                          <button
+                            onClick={() => {
+                              setActivityPage(activityPage + 1)
+                              fetchCustomerActivityPage(selectedCustomer.profile.id, activityPage + 1)
+                            }}
+                            disabled={activityPage * activityItemsPerPage >= selectedCustomer.recentActivity.total}
+                            className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
