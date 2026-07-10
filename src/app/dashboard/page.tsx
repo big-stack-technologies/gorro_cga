@@ -792,25 +792,27 @@ export default function DashboardPage() {
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Activity</h3>
                     <div className="space-y-2">
                       {selectedCustomer.recentActivity.data.slice(0, activityItemsPerPage).map((activity, index) => (
-                        <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex justify-between items-center">
-                          <div>
-                            <p className="font-medium text-gray-900 dark:text-white">{activity.description}</p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">{activity.type} - {activity.direction}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className={`font-bold ${
-                              activity.direction === "INBOUND" ? "text-green-600" : "text-red-600"
-                            }`}>
-                              {activity.direction === "INBOUND" ? "+" : "-"}₦{(activity.amount || 0).toLocaleString()}
-                            </p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">{new Date(activity.date).toLocaleDateString()}</p>
+                        <div key={index} className="bg-gray-50 dark:bg-gray-700 p-3 sm:p-4 rounded-lg">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-gray-900 dark:text-white text-sm sm:text-base break-words">{activity.description}</p>
+                              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{activity.type} - {activity.direction}</p>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <p className={`font-bold text-sm sm:text-base ${
+                                activity.direction === "INBOUND" ? "text-green-600" : "text-red-600"
+                              }`}>
+                                {activity.direction === "INBOUND" ? "+" : "-"}₦{(activity.amount || 0).toLocaleString()}
+                              </p>
+                              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{new Date(activity.date).toLocaleDateString()}</p>
+                            </div>
                           </div>
                         </div>
                       ))}
                     </div>
                     {selectedCustomer.recentActivity.total > activityItemsPerPage && (
-                      <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                           Showing {Math.min(activityItemsPerPage, selectedCustomer.recentActivity.data.length)} of {selectedCustomer.recentActivity.total} activities
                         </p>
                         <div className="flex items-center gap-2">
@@ -824,7 +826,7 @@ export default function DashboardPage() {
                           >
                             <ChevronLeft className="w-4 h-4" />
                           </button>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">Page {activityPage}</span>
+                          <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Page {activityPage}</span>
                           <button
                             onClick={() => {
                               setActivityPage(activityPage + 1)
