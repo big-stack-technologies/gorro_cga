@@ -4,18 +4,15 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { 
   LayoutDashboard, 
-  Users, 
-  Wallet, 
-  TrendingUp, 
-  Settings,
-  Search,
-  MoreVertical,
+  FileText, 
   User,
   LogOut,
   Menu,
   X,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  MoreVertical,
+  Search
 } from "lucide-react"
 import { XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from "recharts"
 
@@ -286,25 +283,13 @@ export default function DashboardPage() {
         </div>
 
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          <a href="#" className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium">
+          <a href="/dashboard" className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium">
             <LayoutDashboard className="w-5 h-5" />
             Dashboard
           </a>
-          <a href="#" className="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-            <Users className="w-5 h-5" />
-            Customers
-          </a>
-          <a href="#" className="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-            <Wallet className="w-5 h-5" />
-            Earnings
-          </a>
-          <a href="#" className="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-            <TrendingUp className="w-5 h-5" />
-            Analytics
-          </a>
-          <a href="#" className="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-            <Settings className="w-5 h-5" />
-            Settings
+          <a href="/field-reports" className="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+            <FileText className="w-5 h-5" />
+            Field Reports
           </a>
         </nav>
 

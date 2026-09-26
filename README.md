@@ -1,3 +1,12 @@
+This is a [Next.js](https://nextjs.org) project for the CGA (Community Growth Associate) dashboard and field reporting system.
+
+## Features
+
+- **Dashboard**: View referral statistics, customer data, and performance trends
+- **Field Reports**: Daily field report submission form for CGAs to track their activities
+- **Customer Management**: View and manage referred customers with detailed profiles
+- **Authentication**: Secure login with token-based authentication
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
