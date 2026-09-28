@@ -22,7 +22,7 @@ export default function LoginPage() {
     try {
       console.log("Attempting login with:", { email, password });
       
-      const response = await fetch("https://gorro.online/auth/login", {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

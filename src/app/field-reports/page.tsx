@@ -92,12 +92,12 @@ export default function FieldReportsPage() {
   const fetchCommunities = async () => {
     const token = localStorage.getItem("token")
     try {
-      const response = await fetch("https://gorro.online/communities?limit=1000", {
+      const response = await fetch("/api/field-reports/communities", {
         headers: { Authorization: `Bearer ${token}` }
       })
       if (response.ok) {
         const data = await response.json()
-        setCommunities(data.data || [])
+        setCommunities(data || [])
       }
     } catch (error) {
       console.error("Error fetching communities:", error)
@@ -108,7 +108,7 @@ export default function FieldReportsPage() {
     const token = localStorage.getItem("token")
     setLoadingReports(true)
     try {
-      const response = await fetch("https://gorro.online/field-reports/mine", {
+      const response = await fetch("/api/field-reports/mine", {
         headers: { Authorization: `Bearer ${token}` }
       })
       if (response.ok) {
@@ -192,7 +192,7 @@ export default function FieldReportsPage() {
     if (nextAction.trim()) body.nextAction = nextAction.trim()
 
     try {
-      const response = await fetch("https://gorro.online/field-reports", {
+      const response = await fetch("/api/field-reports", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -581,7 +581,7 @@ function ReportForm({ reportDate, setReportDate, communityId, setCommunityId, lo
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Community</label>
             <select value={communityId} onChange={(e) => setCommunityId(e.target.value)} className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
-              <option value="">Select (optional)</option>
+              <option value="">No community</option>
               {communities.map((community: Community) => (
                 <option key={community.id} value={community.id}>{community.name}</option>
               ))}
