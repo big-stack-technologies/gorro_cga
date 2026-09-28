@@ -143,16 +143,16 @@ export default function DashboardPage() {
 
     try {
       const [summaryRes, customersRes, allCustomersRes, trendsRes] = await Promise.all([
-        fetch("https://gorro.online/cga/summary", {
+        fetch("/api/cga/summary", {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        fetch(`https://gorro.online/cga/customers?page=${currentPage}&limit=${itemsPerPage}`, {
+        fetch(`/api/cga/customers?page=${currentPage}&limit=${itemsPerPage}`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        fetch("https://gorro.online/cga/customers?limit=1000", {
+        fetch("/api/cga/customers?limit=1000", {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        fetch("https://gorro.online/cga/trends?interval=month", {
+        fetch("/api/cga/trends?interval=month", {
           headers: { Authorization: `Bearer ${token}` }
         })
       ])
@@ -215,7 +215,7 @@ export default function DashboardPage() {
     setLoadingDetail(true)
     setActivityPage(1)
     try {
-      const response = await fetch(`https://gorro.online/cga/customers/${customerId}?activityLimit=${activityItemsPerPage}&activityPage=1`, {
+      const response = await fetch(`/api/cga/customers/${customerId}?activityLimit=${activityItemsPerPage}&activityPage=1`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
@@ -238,7 +238,7 @@ export default function DashboardPage() {
     }
 
     try {
-      const response = await fetch(`https://gorro.online/cga/customers/${customerId}?activityLimit=${activityItemsPerPage}&activityPage=${page}`, {
+      const response = await fetch(`/api/cga/customers/${customerId}?activityLimit=${activityItemsPerPage}&activityPage=${page}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
@@ -428,48 +428,81 @@ export default function DashboardPage() {
 
           {/* Customers Table */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Referred Customers</h2>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-                  <div className="relative w-full sm:w-auto">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3">Referred Customers</h2>
+              
+              {/* Filters Row - Horizontal Scrollable */}
+              <div className="flex items-center gap-2">
+                {/* Scrollable Filter Container */}
+                <div className="flex items-center gap-2 overflow-x-auto flex-1 pb-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
+                  <div className="relative flex-shrink-0 w-48">
+                    <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
                     <input
                       type="text"
-                      placeholder="Search customers..."
+                      placeholder="Search..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white w-full"
+                      className="pl-8 pr-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white w-full"
                     />
                   </div>
+                  
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white w-full sm:w-auto"
+                    className="px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white flex-shrink-0"
                   >
                     <option value="All">All Status</option>
                     <option value="ACTIVE">Active</option>
                     <option value="INACTIVE">Inactive</option>
                     <option value="CLOSED">Closed</option>
                   </select>
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <label className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">From:</label>
+
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <label className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">From:</label>
                     <input
                       type="date"
                       value={dateFrom}
                       onChange={(e) => setDateFrom(e.target.value)}
-                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white w-full sm:w-auto"
+                      className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white w-32"
                     />
                   </div>
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <label className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">To:</label>
+
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <label className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">To:</label>
                     <input
                       type="date"
                       value={dateTo}
                       onChange={(e) => setDateTo(e.target.value)}
-                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white w-full sm:w-auto"
+                      className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white w-32"
                     />
                   </div>
+                </div>
+
+                {/* Fixed Action Buttons */}
+                <div className="flex gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => {
+                      // Filters are already applied in real-time
+                      const hasFilters = searchQuery || statusFilter !== "All" || dateFrom || dateTo
+                      if (hasFilters) {
+                        // Visual feedback
+                      }
+                    }}
+                    className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+                  >
+                    Apply
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSearchQuery("")
+                      setStatusFilter("All")
+                      setDateFrom("")
+                      setDateTo("")
+                    }}
+                    className="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors whitespace-nowrap"
+                  >
+                    Clear
+                  </button>
                 </div>
               </div>
             </div>
@@ -477,47 +510,47 @@ export default function DashboardPage() {
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Customer</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Phone</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Joined</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">KYC Tier</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Wallet Balance</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Customer</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Phone</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Joined</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">KYC Tier</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Wallet Balance</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {loading ? (
                     <tr>
-                      <td colSpan={8} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                      <td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                         Loading customers...
                       </td>
                     </tr>
                   ) : filteredCustomers.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                      <td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                         No customers found
                       </td>
                     </tr>
                   ) : (
                     filteredCustomers.map((customer) => (
                       <tr key={customer.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="font-medium text-gray-900 dark:text-white">{customer.name}</div>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="text-xs font-medium text-gray-900 dark:text-white">{customer.name}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-400">{customer.email}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-400">{customer.phoneNumber}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-400">
+                        <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">{customer.email}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">{customer.phoneNumber}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">
                           {new Date(customer.joinedAt).toLocaleDateString()}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 rounded text-xs font-medium">
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className="px-2 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 rounded text-xs font-medium">
                             Tier {customer.kycTier}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                             customer.status === "ACTIVE" 
                               ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" 
                               : customer.status === "CLOSED"
@@ -527,22 +560,22 @@ export default function DashboardPage() {
                             {customer.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white font-medium">
+                        <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-900 dark:text-white font-medium">
                           ₦{(customer.walletBalance || 0).toLocaleString()}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap relative">
+                        <td className="px-4 py-3 whitespace-nowrap relative">
                           <div className="relative">
                             <button 
                               onClick={() => setDropdownOpen(dropdownOpen === customer.id ? null : customer.id)}
                               className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                             >
-                              <MoreVertical className="w-5 h-5" />
+                              <MoreVertical className="w-4 h-4" />
                             </button>
                             {dropdownOpen === customer.id && (
                               <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10">
                                 <button
                                   onClick={() => handleViewDetails(customer.id)}
-                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg"
+                                  className="w-full text-left px-4 py-2 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg"
                                 >
                                   View Details
                                 </button>
@@ -556,8 +589,8 @@ export default function DashboardPage() {
                 </tbody>
               </table>
             </div>
-            <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="p-4 sm:p-6 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                 {searchQuery || statusFilter !== "All" || dateFrom || dateTo
                   ? `Showing ${filteredCustomers.length} of ${allCustomers?.total || 0} customers`
                   : `Showing ${customers?.data.length || 0} of ${customers?.total || 0} customers`

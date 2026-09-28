@@ -17,7 +17,6 @@ import {
   ChevronRight,
   Plus,
   Eye,
-  Edit,
   X
 } from "lucide-react"
 import toast from "toastify-js"
@@ -58,7 +57,7 @@ export default function FieldReportsPage() {
   const [communities, setCommunities] = useState<Community[]>([])
   const [pastReports, setPastReports] = useState<FieldReport[]>([])
   const [showModal, setShowModal] = useState(false)
-  const [viewMode, setViewMode] = useState<'create' | 'view' | 'edit'>('create')
+  const [viewMode, setViewMode] = useState<'create' | 'view'>('create')
   const [selectedReport, setSelectedReport] = useState<FieldReport | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
@@ -126,27 +125,6 @@ export default function FieldReportsPage() {
   const openViewModal = (report: FieldReport) => {
     setSelectedReport(report)
     setViewMode('view')
-    setShowModal(true)
-  }
-
-  const openEditModal = (report: FieldReport) => {
-    setSelectedReport(report)
-    setReportDate(report.reportDate.split('T')[0])
-    setCommunityId(report.community?.id || "")
-    setLocation(report.location || "")
-    setProspectsApproached(report.prospectsApproached?.toString() || "")
-    setCustomerEngagements(report.customerEngagements?.toString() || "")
-    setProductDemonstrations(report.productDemonstrations?.toString() || "")
-    setNewRegistrations(report.newRegistrations?.toString() || "")
-    setKycFollowUps(report.kycFollowUps?.toString() || "")
-    setGroupLeadersContacted(report.groupLeadersContacted?.toString() || "")
-    setGroupsIdentified(report.groupsIdentified?.toString() || "")
-    setFollowUpsConducted(report.followUpsConducted?.toString() || "")
-    setCustomerObjections(report.customerObjections || "")
-    setCustomerComplaints(report.customerComplaints || "")
-    setOpportunitiesIdentified(report.opportunitiesIdentified || "")
-    setNextAction(report.nextAction || "")
-    setViewMode('edit')
     setShowModal(true)
   }
 
@@ -443,7 +421,7 @@ export default function FieldReportsPage() {
           >
             <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
-                {viewMode === 'view' ? 'View Report' : viewMode === 'edit' ? 'Edit Report' : 'New Report'}
+                {viewMode === 'view' ? 'View Report' : 'New Report'}
               </h2>
               <button
                 onClick={closeModal}
@@ -455,7 +433,7 @@ export default function FieldReportsPage() {
 
             <div className="flex-1 overflow-y-auto">
               {viewMode === 'view' && selectedReport ? (
-                <ViewReportContent report={selectedReport} onEdit={() => openEditModal(selectedReport)} />
+                <ViewReportContent report={selectedReport} />
               ) : (
                 <ReportForm
                   reportDate={reportDate}
@@ -502,7 +480,7 @@ export default function FieldReportsPage() {
   )
 }
 
-function ViewReportContent({ report, onEdit }: { report: FieldReport; onEdit: () => void }) {
+function ViewReportContent({ report }: { report: FieldReport }) {
   return (
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       <div>
@@ -554,16 +532,6 @@ function ViewReportContent({ report, onEdit }: { report: FieldReport; onEdit: ()
           </div>
         </div>
       )}
-
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-        <button
-          onClick={onEdit}
-          className="w-full sm:w-auto px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-        >
-          <Edit className="w-4 h-4" />
-          Edit Report
-        </button>
-      </div>
     </div>
   )
 }
